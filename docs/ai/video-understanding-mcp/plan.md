@@ -62,7 +62,7 @@ Caller headers apply to this GET and to redirect hops whose `URL.host` (hostname
 
 ### yt-dlp in two steps: metadata, then download
 
-1. `yt-dlp -J --no-playlist --no-warnings <url>` (60 s timeout) → read `duration`. If the analyzed range is over the limit → `LIMIT_EXCEEDED` before downloading (REQ-011).
+1. `yt-dlp --ignore-config -J --no-playlist --no-warnings <url>` (60 s timeout) → read `duration`. If the analyzed range is over the limit → `LIMIT_EXCEEDED` before downloading (REQ-011).
 2. `yt-dlp --no-playlist -f "bv*[height<=480]+ba/b[height<=480]/bv*+ba/b" --merge-output-format mp4 --max-filesize <maxDownloadBytes> --ffmpeg-location <ffmpeg dir> -o <tmp>/source.%(ext)s <url>`.
 
 Extraction failures map to `SOURCE_UNAVAILABLE` with the last `ERROR:` line of stderr, truncated to 300 chars. A run that ends without a file (yt-dlp skips files over `--max-filesize`) → `LIMIT_EXCEEDED`.
@@ -73,12 +73,12 @@ Extraction failures map to `SOURCE_UNAVAILABLE` with the last `ERROR:` line of s
 
 Encode `prepared.mp4`:
 
-| Attempt                                           | Video                                                        | Audio                     |
-| ------------------------------------------------- | ------------------------------------------------------------ | ------------------------- |
-| 1                                                 | `scale=-2:'min(480,ih)'`, libx264 `-preset veryfast -crf 30` | `-c:a aac -b:a 64k -ac 1` |
-| 2 (only when attempt 1 exceeds the payload limit) | `scale=-2:'min(360,ih)'`, `-crf 34`                          | 48k                       |
+| Attempt                                           | Video                                                                                                 | Audio                     |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1                                                 | Shorter side at most 480 pixels (even dimensions, never upscaled), libx264 `-preset veryfast -crf 30` | `-c:a aac -b:a 64k -ac 1` |
+| 2 (only when attempt 1 exceeds the payload limit) | Shorter side at most 360 pixels, `-crf 34`                                                            | 48k                       |
 
-All attempts also use `-pix_fmt yuv420p -movflags +faststart -map 0:v:0 -map 0:a:0?`. A range uses `-ss <start> -t <end-start>` before `-i`.
+Inputs are opened with `-protocol_whitelist file`, and ffprobe rejects playlist and concatenation formats (`hls`, `concat`). All attempts also use `-pix_fmt yuv420p -movflags +faststart -map 0:v:0 -map 0:a:0?`. A range uses `-ss <start> -t <end-start>` before `-i`.
 
 If attempt 2 still exceeds the limit → `LIMIT_EXCEEDED` with measured size, limit, and the range hint. The probe measured 95 s at 480p ≈ 2.3 MB, so attempt 1 normally suffices (REQ-013).
 

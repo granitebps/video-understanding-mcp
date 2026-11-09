@@ -243,6 +243,9 @@ export function createUnderstand(
           baselinePromptTokens: await baseline,
           clipSeconds,
           partFormat: config.partFormat,
+          ...(input.fps !== undefined && SUPPORTS_FPS[config.partFormat]
+            ? { appliedFps: input.fps }
+            : {}),
         });
         if (warning) warnings.push(warning);
       } else {

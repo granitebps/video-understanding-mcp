@@ -28,14 +28,20 @@ export interface PreparedVideo {
 }
 
 interface EncodeAttempt {
-  maxHeight: number;
+  /** Upper bound for the shorter side, so portrait clips keep the same detail as landscape. */
+  shortSide: number;
   crf: number;
   audioBitrate: string;
 }
 
+/** Inputs are read as local files only, so containers cannot pull in network or other resources. */
+const INPUT_PROTOCOLS = ["-protocol_whitelist", "file"];
+/** Playlist and concatenation formats reference other files; images are not video. */
+const REJECTED_FORMATS = /(^|,)(hls|applehttp|concat|ffconcat|image2|[a-z0-9]+_pipe)(,|$)/;
+
 const LADDER: readonly EncodeAttempt[] = [
-  { maxHeight: 480, crf: 30, audioBitrate: "64k" },
-  { maxHeight: 360, crf: 34, audioBitrate: "48k" },
+  { shortSide: 480, crf: 30, audioBitrate: "64k" },
+  { shortSide: 360, crf: 34, audioBitrate: "48k" },
 ];
 
 function invalidMedia(reason: string): VideoError {
@@ -58,6 +64,7 @@ export async function probeMedia(
   const result = await runProcess(
     config.ffprobePath,
     [
+      ...INPUT_PROTOCOLS,
       "-v",
       "error",
       "-show_entries",
@@ -81,9 +88,8 @@ export async function probeMedia(
   const video = streams.find((stream) => stream.codec_type === "video");
   const hasAudio = streams.some((stream) => stream.codec_type === "audio");
   const duration = Number(parsed.format?.duration ?? video?.duration);
-  // ffprobe reports still images as a one-frame "video" in an image container.
-  const isImage = /(^|,)image2|_pipe(,|$)/.test(parsed.format?.format_name ?? "");
-  if (!video || isImage || !Number.isFinite(duration) || duration <= 0) {
+  const rejectedFormat = REJECTED_FORMATS.test(parsed.format?.format_name ?? "");
+  if (!video || rejectedFormat || !Number.isFinite(duration) || duration <= 0) {
     throw invalidMedia("no video stream");
   }
 
@@ -94,6 +100,13 @@ export async function probeMedia(
     width: video.width ?? null,
     height: video.height ?? null,
   };
+}
+
+function scaleFilter(shortSide: number): string {
+  const even = (expr: string) => `trunc(${expr}/2)*2`;
+  const width = `if(gte(iw,ih),-2,${even(`min(${shortSide},iw)`)})`;
+  const height = `if(gte(iw,ih),${even(`min(${shortSide},ih)`)},-2)`;
+  return `scale='${width}':'${height}'`;
 }
 
 function encodeArgs(
@@ -110,6 +123,7 @@ function encodeArgs(
     range.start.toFixed(3),
     "-t",
     (range.end - range.start).toFixed(3),
+    ...INPUT_PROTOCOLS,
     "-i",
     source,
     "-map",
@@ -117,7 +131,7 @@ function encodeArgs(
     "-map",
     "0:a:0?",
     "-vf",
-    `scale=-2:'min(${attempt.maxHeight},ih)'`,
+    scaleFilter(attempt.shortSide),
     "-c:v",
     "libx264",
     "-preset",

@@ -11,6 +11,10 @@ export interface Fixtures {
   noAudio: string;
   jpeg: string;
   html: string;
+  /** 720x1280 portrait clip, 4 s, with audio. */
+  portrait: string;
+  /** Local HLS playlist whose only segment is a local file. */
+  playlist: string;
 }
 
 let cached: Fixtures | undefined;
@@ -61,6 +65,33 @@ export function makeFixtures(): Fixtures {
   ffmpeg(["-f", "lavfi", "-i", "testsrc2=size=320x240", "-frames:v", "1", jpeg]);
   writeFileSync(html, "<!doctype html><html><body>not a video</body></html>");
 
-  cached = { dir, withAudio, noAudio, jpeg, html };
+  const portrait = join(dir, "portrait.mp4");
+  ffmpeg([
+    "-f",
+    "lavfi",
+    "-i",
+    "testsrc2=size=720x1280:rate=24:duration=4",
+    "-f",
+    "lavfi",
+    "-i",
+    "sine=frequency=330:duration=4",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-c:a",
+    "aac",
+    "-shortest",
+    portrait,
+  ]);
+  const segment = join(dir, "segment.ts");
+  ffmpeg(["-i", noAudio, "-c", "copy", "-f", "mpegts", segment]);
+  const playlist = join(dir, "clip.m3u8");
+  writeFileSync(
+    playlist,
+    "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:6\n#EXTINF:6.0,\nsegment.ts\n#EXT-X-ENDLIST\n",
+  );
+
+  cached = { dir, withAudio, noAudio, jpeg, html, portrait, playlist };
   return cached;
 }

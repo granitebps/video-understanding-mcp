@@ -8,6 +8,9 @@ import { runProcess } from "./process.js";
 const METADATA_TIMEOUT_MS = 60_000;
 const DOWNLOAD_TIMEOUT_MS = 600_000;
 const FORMAT = "bv*[height<=480]+ba/b[height<=480]/bv*+ba/b";
+/** User and system yt-dlp config files could change formats, outputs, or skip downloads. */
+const BASE_ARGS = ["--ignore-config", "--no-playlist", "--no-warnings"];
+const OVER_MAX_FILESIZE = /larger than max-filesize/i;
 
 function extractionError(stderr: string): VideoError {
   const lines = stderr.split(/\r?\n/).filter((line) => line.startsWith("ERROR:"));
@@ -28,7 +31,7 @@ export async function ytDlpDuration(
   url: string,
   signal: AbortSignal,
 ): Promise<number | null> {
-  const result = await runProcess(config.ytDlpPath, ["-J", "--no-playlist", "--no-warnings", url], {
+  const result = await runProcess(config.ytDlpPath, [...BASE_ARGS, "-J", url], {
     signal,
     timeoutMs: METADATA_TIMEOUT_MS,
     maxStdoutBytes: 16 * 1024 * 1024,
@@ -50,8 +53,7 @@ export async function ytDlpDownload(
   signal: AbortSignal,
 ): Promise<string> {
   const args = [
-    "--no-playlist",
-    "--no-warnings",
+    ...BASE_ARGS,
     "--no-progress",
     "-f",
     FORMAT,
@@ -77,10 +79,16 @@ export async function ytDlpDownload(
   const file = (await readdir(workDir)).find(
     (name) => name.startsWith("source.") && !name.endsWith(".part") && !name.endsWith(".ytdl"),
   );
-  if (!file) {
+  if (!file && OVER_MAX_FILESIZE.test(`${result.stdout}\n${result.stderr}`)) {
     throw new VideoError({
       code: "LIMIT_EXCEEDED",
-      safeMessage: `yt-dlp did not download the video; it is probably larger than the ${(config.maxDownloadBytes / 1_000_000).toFixed(0)} MB download limit (VIDEO_MAX_DOWNLOAD_MB)`,
+      safeMessage: `The video is larger than the ${(config.maxDownloadBytes / 1_000_000).toFixed(0)} MB download limit (VIDEO_MAX_DOWNLOAD_MB)`,
+    });
+  }
+  if (!file) {
+    throw new VideoError({
+      code: "SOURCE_UNAVAILABLE",
+      safeMessage: "yt-dlp finished without downloading a video from this page",
     });
   }
   return join(workDir, file);

@@ -33,7 +33,7 @@ describe("probeMedia", { timeout: 30_000 }, () => {
     expect(info).toMatchObject({ hasVideo: true, hasAudio: true, height: 720 });
   });
 
-  it.each(["jpeg", "html"] as const)("rejects a %s as INVALID_MEDIA", async (kind) => {
+  it.each(["jpeg", "html", "playlist"] as const)("rejects a %s as INVALID_MEDIA", async (kind) => {
     await expect(probeMedia(config, makeFixtures()[kind], signal())).rejects.toMatchObject({
       code: "INVALID_MEDIA",
     });
@@ -55,6 +55,32 @@ describe("prepareVideo", { timeout: 30_000 }, () => {
     expect(info.hasAudio).toBe(true);
     expect(info.height).toBeLessThanOrEqual(480);
     expect(Math.abs(info.durationSeconds - 10)).toBeLessThanOrEqual(0.5);
+  });
+
+  it("keeps a portrait clip 480 pixels wide", async () => {
+    const prepared = await prepareVideo(
+      config,
+      makeFixtures().portrait,
+      workDir(),
+      { start: 0, end: 4 },
+      signal(),
+    );
+    const info = await probeMedia(config, prepared.path, signal());
+
+    expect(info.width).toBe(480);
+    expect(info.height).toBe(854);
+  });
+
+  it("does not upscale a clip smaller than the limit", async () => {
+    const prepared = await prepareVideo(
+      config,
+      makeFixtures().noAudio,
+      workDir(),
+      { start: 0, end: 6 },
+      signal(),
+    );
+
+    expect((await probeMedia(config, prepared.path, signal())).height).toBe(360);
   });
 
   it("prepares a clip without audio", async () => {

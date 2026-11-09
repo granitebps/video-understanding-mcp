@@ -102,8 +102,20 @@ describe("acquireSource with page URLs", () => {
     });
   });
 
-  it("reports a missing output file as over the download limit", async () => {
-    await expect(acquire("/watch/nofile")).rejects.toMatchObject({ code: "LIMIT_EXCEEDED" });
+  it("reports an over-size page video as over the download limit", async () => {
+    await expect(acquire("/watch/toolarge")).rejects.toMatchObject({ code: "LIMIT_EXCEEDED" });
+  });
+
+  it("reports a run that produced no file for another reason as unavailable", async () => {
+    await expect(acquire("/watch/nofile")).rejects.toMatchObject({ code: "SOURCE_UNAVAILABLE" });
+  });
+
+  it("tells yt-dlp to ignore user and system config files", async () => {
+    await acquire("/watch/ok");
+
+    const runs = calls().filter((args) => !args.includes("--version"));
+    expect(runs).toHaveLength(2);
+    for (const args of runs) expect(args).toContain("--ignore-config");
   });
 
   it("asks for yt-dlp or a direct media URL when yt-dlp is missing", async () => {

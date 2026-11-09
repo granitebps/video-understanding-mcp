@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { verifyMediaProcessed } from "../../src/endpoint/media-check.js";
+import { minimumVideoTokens, verifyMediaProcessed } from "../../src/endpoint/media-check.js";
 import { buildMediaPart } from "../../src/endpoint/request-shapes.js";
 
 const DATA = "data:video/mp4;base64,AAAA";
@@ -65,6 +65,21 @@ describe("verifyMediaProcessed", () => {
         baselinePromptTokens: 2074,
         clipSeconds: 15,
         partFormat: "image_url",
+      }),
+    ).toBeNull();
+  });
+
+  it("lowers the minimum when a low fps was applied", () => {
+    expect(minimumVideoTokens(15)).toBe(375);
+    expect(minimumVideoTokens(15, 0.1)).toBe(38);
+    expect(minimumVideoTokens(15, 2)).toBe(375);
+    expect(
+      verifyMediaProcessed({
+        mainPromptTokens: 2150,
+        baselinePromptTokens: 2074,
+        clipSeconds: 15,
+        partFormat: "video_url",
+        appliedFps: 0.1,
       }),
     ).toBeNull();
   });

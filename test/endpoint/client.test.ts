@@ -89,6 +89,17 @@ describe("sendChat", () => {
     [413, {}, "LIMIT_EXCEEDED"],
     [400, { error: { message: "Request payload size exceeds the limit" } }, "LIMIT_EXCEEDED"],
     [500, { error: { message: "boom" } }, "ENDPOINT_ERROR"],
+    [400, { error: { message: "Request Entity Too Large" } }, "LIMIT_EXCEEDED"],
+    [
+      400,
+      {
+        error: {
+          message:
+            "Invalid JSON payload received. Unknown name \"video_url\" at 'contents[0].parts[1]': Cannot find field.",
+        },
+      },
+      "ENDPOINT_ERROR",
+    ],
   ])("maps HTTP %s to its code", async (status, body, code) => {
     endpoint.chat = [{ status, body }];
 

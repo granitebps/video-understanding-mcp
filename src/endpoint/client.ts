@@ -20,7 +20,9 @@ export type ChatMessage = { role: "system" | "user"; content: unknown };
 
 const REACHABILITY_TIMEOUT_MS = 5_000;
 const ORIGIN_UNREACHABLE_STATUSES = new Set([502, 504, 521, 522, 523, 530]);
-const TOO_LARGE = /too large|payload|request entity|exceeds.*(size|limit)/i;
+// Size phrases only: Google APIs say "Invalid JSON payload received" for unsupported fields.
+const TOO_LARGE =
+  /too large|size exceeds|exceeds the (?:maximum )?(?:request |payload )?(?:size|limit)|maximum (?:request|payload) size/i;
 const MAX_ERROR_TEXT = 300;
 
 function origin(baseUrl: string): string {

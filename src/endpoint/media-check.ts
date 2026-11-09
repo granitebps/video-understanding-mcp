@@ -6,8 +6,16 @@ import { VideoError } from "../errors/video-error.js";
 const MIN_TOKENS_PER_SECOND = 25;
 const MIN_VIDEO_TOKENS = 200;
 
-export function minimumVideoTokens(clipSeconds: number): number {
-  return Math.max(MIN_VIDEO_TOKENS, Math.round(MIN_TOKENS_PER_SECOND * clipSeconds));
+/**
+ * The thresholds assume the default sampling of about one frame per second; a lower applied
+ * fps sends fewer frames, so the minimum shrinks with it.
+ */
+export function minimumVideoTokens(clipSeconds: number, appliedFps?: number): number {
+  const scale = appliedFps !== undefined && appliedFps < 1 ? appliedFps : 1;
+  return Math.max(
+    Math.round(MIN_VIDEO_TOKENS * scale),
+    Math.round(MIN_TOKENS_PER_SECOND * clipSeconds * scale),
+  );
 }
 
 export interface MediaCheckInput {
@@ -16,6 +24,8 @@ export interface MediaCheckInput {
   baselinePromptTokens: number | null;
   clipSeconds: number;
   partFormat: PartFormat;
+  /** Frame rate actually sent to the endpoint, when the request format carries one. */
+  appliedFps?: number;
 }
 
 /**
@@ -33,7 +43,7 @@ export function verifyMediaProcessed(input: MediaCheckInput): Warning | null {
   }
 
   const videoTokens = input.mainPromptTokens - input.baselinePromptTokens;
-  const required = minimumVideoTokens(input.clipSeconds);
+  const required = minimumVideoTokens(input.clipSeconds, input.appliedFps);
   if (videoTokens >= required) return null;
 
   const alternatives = PART_FORMATS.filter((format) => format !== input.partFormat).join(", ");

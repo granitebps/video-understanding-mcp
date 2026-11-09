@@ -24,6 +24,12 @@ if (args.includes("-J")) {
   process.exit(0);
 }
 
+if (url.pathname.includes("toolarge")) {
+  process.stdout.write(
+    "[download] File is larger than max-filesize (900000000 bytes > 500000000 bytes). Aborting.\n",
+  );
+  process.exit(0);
+}
 if (url.pathname.includes("nofile")) process.exit(0);
 
 const template = args[args.indexOf("-o") + 1] ?? "";

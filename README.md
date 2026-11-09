@@ -118,7 +118,7 @@ Invalid values stop the server at startup with a message naming the variable. Wh
 
 1. Checks the configuration, that ffmpeg is installed, and that the base URL answers. If it does not, the call fails with `ENDPOINT_UNREACHABLE` before anything is downloaded.
 2. Gets the video: reads an allowed local file, downloads a direct media URL, or resolves a page URL with yt-dlp (refusing over-long videos before downloading).
-3. Cuts the requested range and re-encodes it to at most 480p H.264 with mono AAC audio, dropping to 360p if needed to fit the upload limit.
+3. Cuts the requested range and re-encodes it to H.264 with mono AAC audio, with the shorter side at most 480 pixels (480×854 for a portrait clip), dropping to 360 if needed to fit the upload limit.
 4. Sends it inline as base64 with the question, plus the text-only baseline request.
 5. Validates the reply, drops timeline moments outside the analyzed range, and converts times to source-video seconds.
 
@@ -157,6 +157,7 @@ Errors start with a code in brackets, for example `[LIMIT_EXCEEDED] The analyzed
 - Downloads refuse loopback, private, link-local, and other non-public addresses, including through redirects, unless `VIDEO_ALLOW_PRIVATE_NETWORK=true`. The endpoint itself may be on a local address.
 - Local files are read only from `VIDEO_ALLOWED_DIRS`, after resolving symbolic links.
 - Caller-supplied headers go only to the original host and are never passed to yt-dlp.
+- ffmpeg and ffprobe open inputs as local files only, and playlist or concatenation formats such as HLS are rejected. yt-dlp runs with `--ignore-config`.
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 

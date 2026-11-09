@@ -34,27 +34,38 @@ async function probe(command: string, args: string[], pattern: RegExp): Promise<
   }
 }
 
-/** Probes each executable once per process and caches the result. */
+/** Caches a successful probe for the process; a missing tool is probed again on the next call. */
 export class Dependencies {
-  private ffmpeg: Promise<DependencyStatus> | undefined;
-  private ffprobe: Promise<DependencyStatus> | undefined;
-  private ytDlp: Promise<DependencyStatus> | undefined;
+  private readonly found = new Map<string, Promise<DependencyStatus>>();
 
   constructor(private readonly config: RuntimeConfig) {}
 
   ffmpegStatus(): Promise<DependencyStatus> {
-    this.ffmpeg ??= probe(this.config.ffmpegPath, ["-version"], /ffmpeg version (\S+)/);
-    return this.ffmpeg;
+    return this.status("ffmpeg", this.config.ffmpegPath, ["-version"], /ffmpeg version (\S+)/);
   }
 
   ffprobeStatus(): Promise<DependencyStatus> {
-    this.ffprobe ??= probe(this.config.ffprobePath, ["-version"], /ffprobe version (\S+)/);
-    return this.ffprobe;
+    return this.status("ffprobe", this.config.ffprobePath, ["-version"], /ffprobe version (\S+)/);
   }
 
   ytDlpStatus(): Promise<DependencyStatus> {
-    this.ytDlp ??= probe(this.config.ytDlpPath, ["--version"], /^(\S+)/);
-    return this.ytDlp;
+    return this.status("ytDlp", this.config.ytDlpPath, ["--version"], /^(\S+)/);
+  }
+
+  private status(
+    key: string,
+    command: string,
+    args: string[],
+    pattern: RegExp,
+  ): Promise<DependencyStatus> {
+    const cached = this.found.get(key);
+    if (cached) return cached;
+    const pending = probe(command, args, pattern).then((status) => {
+      if (!status.available) this.found.delete(key);
+      return status;
+    });
+    this.found.set(key, pending);
+    return pending;
   }
 
   async report(): Promise<DependencyReport> {

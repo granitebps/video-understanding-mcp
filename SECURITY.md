@@ -17,4 +17,5 @@ Never include an endpoint API key, cookie, or authorization header in a report. 
 - **Local files.** Local paths are refused unless `VIDEO_ALLOWED_DIRS` lists the directories that may be read. Paths are resolved through symbolic links before the check.
 - **Network access.** Downloads refuse loopback, private, link-local, and other non-public addresses, including through redirects, unless `VIDEO_ALLOW_PRIVATE_NETWORK=true`. For page URLs only the page host is checked; yt-dlp makes its own follow-up requests.
 - **Caller headers.** Headers passed with a media URL go only to that URL's host and are dropped after a redirect to another host. They are never passed to yt-dlp.
+- **Media inputs.** ffmpeg and ffprobe open inputs with `-protocol_whitelist file`, so a media file cannot make them fetch network resources. Playlist and concatenation formats such as HLS are rejected while probing, before anything is encoded or sent to the endpoint. yt-dlp runs with `--ignore-config`.
 - **Processes.** ffmpeg, ffprobe, and yt-dlp run without a shell, with timeouts, and are killed when a call is cancelled. Temporary media is deleted after every call.
