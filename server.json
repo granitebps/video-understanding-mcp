@@ -1,0 +1,70 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.granitebps/video-understanding-mcp",
+  "title": "Video Understanding MCP",
+  "description": "Let AI agents watch videos and answer questions about them through any OpenAI-compatible endpoint.",
+  "repository": {
+    "url": "https://github.com/granitebps/video-understanding-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@granitebps/video-understanding-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "VIDEO_BASE_URL",
+          "description": "Base URL of an OpenAI-compatible chat completions endpoint whose model accepts video, e.g. https://host/v1",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "VIDEO_MODEL",
+          "description": "Model (or router alias) to send videos to",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "VIDEO_API_KEY",
+          "description": "Endpoint API key, sent as a bearer token",
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "VIDEO_PART_FORMAT",
+          "description": "How the video is attached: video_url, image_url, file, or input_file",
+          "default": "image_url",
+          "format": "string"
+        },
+        {
+          "name": "VIDEO_MAX_DURATION_SECONDS",
+          "description": "Longest analyzed range in seconds",
+          "default": "300",
+          "format": "number"
+        },
+        {
+          "name": "VIDEO_MAX_UPLOAD_MB",
+          "description": "Largest prepared video sent to the endpoint, in MB",
+          "default": "15",
+          "format": "number"
+        },
+        {
+          "name": "VIDEO_ALLOWED_DIRS",
+          "description": "Directories local files may be read from; local files are refused when unset",
+          "format": "string"
+        },
+        {
+          "name": "VIDEO_VERIFY_MEDIA",
+          "description": "Fail calls when the endpoint evidently ignored the video",
+          "default": "true",
+          "format": "boolean"
+        }
+      ]
+    }
+  ]
+}

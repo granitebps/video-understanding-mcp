@@ -1,0 +1,84 @@
+{
+  "name": "@granitebps/video-understanding-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "video-understanding-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "server.json"
+  ],
+  "mcpName": "io.github.granitebps/video-understanding-mcp",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "dev": "npm run build && npm start",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && vitest run",
+    "test:coverage": "npm run build && vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:package": "node scripts/check-package.mjs",
+    "check:install": "node scripts/check-install.mjs",
+    "check:release": "node scripts/check-release.mjs && node scripts/check-workflows.mjs",
+    "test:live": "npm run build && vitest run --config vitest.live.config.ts",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run check:release && npm run check:package && npm run check:install",
+    "prepack": "npm run clean && npm run build"
+  },
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "keywords": [
+    "mcp",
+    "video",
+    "video-understanding",
+    "gemini",
+    "openai-compatible",
+    "model-context-protocol",
+    "stdio"
+  ],
+  "author": "granitebps",
+  "license": "MIT",
+  "description": "Let AI agents understand videos through any OpenAI-compatible endpoint, over MCP.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/granitebps/video-understanding-mcp.git"
+  },
+  "homepage": "https://github.com/granitebps/video-understanding-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/granitebps/video-understanding-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "dotenv": "^17.4.2",
+    "undici": "^7.30.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@types/node": "^25.9.9",
+    "@vitest/coverage-v8": "^3.2.7",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^3.2.7"
+  }
+}
