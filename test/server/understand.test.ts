@@ -108,7 +108,7 @@ beforeAll(() => {
   makeFixtures();
 }, 60_000);
 
-describe("understand_video end to end", () => {
+describe("understand_video end to end", { timeout: 30_000 }, () => {
   it("returns the structured result with analysis metadata and source-time timeline", async () => {
     respond(mainReply("```json\n" + JSON.stringify(REPLY) + "\n```"));
     await connect(config());

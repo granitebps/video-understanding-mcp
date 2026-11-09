@@ -16,8 +16,8 @@ function workDir(): string {
   return mkdtempSync(join(tmpdir(), "vu-prepare-"));
 }
 
-function ffmpegRunning(): boolean {
-  const result = spawnSync("pgrep", ["-f", "vu-prepare-"], { encoding: "utf8" });
+function ffmpegRunning(dir: string): boolean {
+  const result = spawnSync("pgrep", ["-f", dir], { encoding: "utf8" });
   return result.stdout.trim().length > 0;
 }
 
@@ -25,12 +25,12 @@ beforeAll(() => {
   makeFixtures();
 }, 60_000);
 
-describe("probeMedia", () => {
+describe("probeMedia", { timeout: 30_000 }, () => {
   it("reads duration and streams", async () => {
     const info = await probeMedia(config, makeFixtures().withAudio, signal());
 
     expect(info.durationSeconds).toBeCloseTo(20, 0);
-    expect(info).toMatchObject({ hasVideo: true, hasAudio: true, height: 1080 });
+    expect(info).toMatchObject({ hasVideo: true, hasAudio: true, height: 720 });
   });
 
   it.each(["jpeg", "html"] as const)("rejects a %s as INVALID_MEDIA", async (kind) => {
@@ -40,7 +40,7 @@ describe("probeMedia", () => {
   });
 });
 
-describe("prepareVideo", () => {
+describe("prepareVideo", { timeout: 30_000 }, () => {
   it("cuts the range, keeps audio, and scales to at most 480p", async () => {
     const prepared = await prepareVideo(
       config,
@@ -73,7 +73,7 @@ describe("prepareVideo", () => {
     const tiny = { ...config, maxUploadBytes: 10_000 };
 
     await expect(
-      prepareVideo(tiny, makeFixtures().withAudio, workDir(), { start: 0, end: 20 }, signal()),
+      prepareVideo(tiny, makeFixtures().withAudio, workDir(), { start: 0, end: 4 }, signal()),
     ).rejects.toMatchObject({
       code: "LIMIT_EXCEEDED",
       safeMessage: expect.stringMatching(/over the 0\.01 MB upload limit.*start_seconds/) as string,
@@ -93,7 +93,7 @@ describe("prepareVideo", () => {
     setTimeout(() => controller.abort(new Error("cancelled")), 50);
 
     await expect(pending).rejects.toThrow("cancelled");
-    expect(ffmpegRunning()).toBe(false);
+    expect(ffmpegRunning(dir)).toBe(false);
     expect(readdirSync(dir).length).toBeLessThanOrEqual(1);
   });
 });

@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 export interface Fixtures {
   dir: string;
-  /** 1080p, 20 s, test pattern with a sine tone. */
+  /** 720p, 20 s, test pattern with a sine tone. */
   withAudio: string;
   /** Same clip without an audio stream. */
   noAudio: string;
@@ -33,7 +33,7 @@ export function makeFixtures(): Fixtures {
     "-f",
     "lavfi",
     "-i",
-    "testsrc2=size=1920x1080:rate=24:duration=20",
+    "testsrc2=size=1280x720:rate=24:duration=20",
     "-f",
     "lavfi",
     "-i",

@@ -168,15 +168,6 @@ See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 - Which upstream provider served a request is not visible beyond the model name the endpoint reports.
 - Only stdio transport is provided.
 
-## Tested with
-
-| Endpoint                                                    | Model (as reported)       | `video_url`                                                                                 | `image_url` | `file`                                                 |
-| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------ |
-| [9router](https://github.com/decolua/9router) (Gemini path) | `gemini-3.8-flash-n`      | Ignored; caught as `MEDIA_NOT_PROCESSED`                                                    | Works       | Only partly processed; caught as `MEDIA_NOT_PROCESSED` |
-| [OpenRouter](https://openrouter.ai)                         | `google/gemini-3.8-flash` | Not yet verified (OpenRouter requires at least $1.00 of account balance for video requests) | Works       | Not tested                                             |
-
-With the check turned off, the ignored formats produced confident descriptions of a different video, which is why `VIDEO_VERIFY_MEDIA` defaults to `true`. Page URLs were verified with a public TikTok post through yt-dlp. Other endpoints are listed in [Request formats](#request-formats) from their documentation and have not been tested yet.
-
 ## Development
 
 ```bash

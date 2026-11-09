@@ -26,7 +26,7 @@ import { parseReply, placeTimeline } from "./normalize.js";
 import { Semaphore } from "./semaphore.js";
 
 const BASELINE_MAX_TOKENS = 16;
-export const TEMP_PREFIX = "video-understanding-mcp-";
+export const TEMP_PREFIX = "video-understanding-mcp-work-";
 
 export type LogEvent = Record<string, string | number | boolean | null>;
 export type Logger = (event: LogEvent) => void;

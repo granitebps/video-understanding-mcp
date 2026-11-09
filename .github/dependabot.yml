@@ -8,6 +8,17 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      production:
+        dependency-type: production
+      development:
+        dependency-type: development
+    ignore:
+      # typescript-eslint supports TypeScript below 6.1; @types/node majors are upgraded by hand.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -16,3 +27,6 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      actions:
+        patterns: ["*"]

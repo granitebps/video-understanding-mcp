@@ -54,7 +54,7 @@ export async function startFakeEndpoint(): Promise<FakeEndpoint> {
     request.on("data", (chunk: Buffer) => chunks.push(chunk));
     request.on("end", () => {
       const raw = Buffer.concat(chunks).toString("utf8");
-      let json: unknown = null;
+      let json: unknown;
       try {
         json = raw ? (JSON.parse(raw) as unknown) : null;
       } catch {
