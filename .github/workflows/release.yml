@@ -80,12 +80,13 @@ jobs:
             exit "$status"
           fi
 
-          for attempt in $(seq 1 12); do
+          # npm can take several minutes to serve a newly published version; wait up to 10.
+          for attempt in $(seq 1 60); do
             if published=$(npm view "$package_name@$package_version" name version gitHead --json 2>/dev/null) && echo "$published" | jq -e --arg name "$package_name" --arg version "$package_version" --arg sha "$GITHUB_SHA" '.name == $name and .version == $version and .gitHead == $sha' >/dev/null; then
               echo "Verified $package_name@$package_version at $GITHUB_SHA"
               exit 0
             fi
-            sleep 5
+            sleep 10
           done
           echo "npm did not serve the expected package metadata" >&2
           exit 1
