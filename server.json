@@ -36,6 +36,12 @@
           "format": "string"
         },
         {
+          "name": "VIDEO_EXTRA_HEADERS",
+          "description": "Extra endpoint request headers as a JSON object, such as Cloudflare Access service-token headers",
+          "isSecret": true,
+          "format": "string"
+        },
+        {
           "name": "VIDEO_PART_FORMAT",
           "description": "How the video is attached: video_url, image_url, file, or input_file",
           "default": "image_url",

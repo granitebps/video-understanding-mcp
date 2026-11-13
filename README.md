@@ -98,6 +98,7 @@ If the endpoint ignores the video, the call fails with `MEDIA_NOT_PROCESSED` ins
 | `VIDEO_BASE_URL`              | —           | Required. Endpoint base URL, for example `https://host/v1`.                                                      |
 | `VIDEO_MODEL`                 | —           | Required. Model name or router alias.                                                                            |
 | `VIDEO_API_KEY`               | —           | Sent as `Authorization: Bearer <key>`.                                                                           |
+| `VIDEO_EXTRA_HEADERS`         | —           | Extra endpoint request headers as a JSON object, for example Cloudflare Access service-token headers.            |
 | `VIDEO_PART_FORMAT`           | `image_url` | `image_url`, `video_url`, `file`, or `input_file`.                                                               |
 | `VIDEO_MAX_DURATION_SECONDS`  | `300`       | Longest analyzed range (1–7200).                                                                                 |
 | `VIDEO_MAX_UPLOAD_MB`         | `15`        | Largest prepared video sent inline, before base64 (1–100).                                                       |

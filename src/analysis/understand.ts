@@ -159,6 +159,7 @@ export function createUnderstand(
     const settings: EndpointSettings = {
       baseUrl: endpoint.baseUrl,
       apiKey: config.apiKey,
+      extraHeaders: config.extraHeaders,
       model: endpoint.model,
       requestTimeoutMs: config.requestTimeoutMs,
     };

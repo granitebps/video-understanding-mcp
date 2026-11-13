@@ -5,6 +5,7 @@ import { parseChatResponse, type ParsedUsage } from "./response-parser.js";
 export interface EndpointSettings {
   baseUrl: string;
   apiKey: string | undefined;
+  extraHeaders: Record<string, string>;
   model: string;
   requestTimeoutMs: number;
 }
@@ -42,6 +43,7 @@ function unreachable(baseUrl: string, cause?: unknown): VideoError {
 
 function headers(settings: EndpointSettings): Record<string, string> {
   return {
+    ...settings.extraHeaders,
     "content-type": "application/json",
     accept: "application/json, text/event-stream",
     ...(settings.apiKey ? { authorization: `Bearer ${settings.apiKey}` } : {}),
@@ -49,7 +51,11 @@ function headers(settings: EndpointSettings): Record<string, string> {
 }
 
 function safeText(settings: EndpointSettings, text: string): string {
-  const redacted = redactSecrets(text, settings.apiKey ? [settings.apiKey] : []);
+  const secrets = [
+    ...(settings.apiKey ? [settings.apiKey] : []),
+    ...Object.values(settings.extraHeaders),
+  ];
+  const redacted = redactSecrets(text, secrets);
   return redacted.length > MAX_ERROR_TEXT ? `${redacted.slice(0, MAX_ERROR_TEXT)}…` : redacted;
 }
 
