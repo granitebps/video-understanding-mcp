@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## 1.0.2 — 2026-11-13
+
+### Added
+
+- `VIDEO_EXTRA_HEADERS` sends extra headers, given as a JSON object, with every endpoint request, for endpoints behind an auth proxy such as Cloudflare Access (`CF-Access-Client-Id` and `CF-Access-Client-Secret`). It cannot replace `Authorization`, `Accept`, or `Content-Type`; its values are redacted from errors like the API key; and an invalid value stops the server at startup with a message that names keys only.
+
 ## 1.0.1 — 2026-11-09
 
 ### Fixed
