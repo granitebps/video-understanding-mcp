@@ -69,7 +69,10 @@ export function registerTools(
   server: McpServer,
   { config, dependencies, understand, version }: RegisterToolsOptions,
 ): void {
-  const secrets = config.apiKey ? [config.apiKey] : [];
+  const secrets = [
+    ...(config.apiKey ? [config.apiKey] : []),
+    ...Object.values(config.extraHeaders),
+  ];
 
   server.registerTool(
     "understand_video",

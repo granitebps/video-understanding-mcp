@@ -7,6 +7,7 @@ export type PartFormat = (typeof PART_FORMATS)[number];
 export interface RuntimeConfig {
   baseUrl: string | undefined;
   apiKey: string | undefined;
+  extraHeaders: Record<string, string>;
   model: string | undefined;
   partFormat: PartFormat;
   maxDurationSeconds: number;
@@ -77,6 +78,40 @@ function readBaseUrl(env: NodeJS.ProcessEnv): string | undefined {
   return raw.replace(/\/+$/, "");
 }
 
+const HEADER_NAME = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+const RESERVED_HEADERS = new Set(["accept", "authorization", "content-type"]);
+
+// Error messages name keys only: header values are usually credentials.
+function readExtraHeaders(env: NodeJS.ProcessEnv): Record<string, string> {
+  const name = "VIDEO_EXTRA_HEADERS";
+  const raw = readNonEmpty(env, name);
+  if (raw === undefined) return {};
+  const rule = "a JSON object of header names to string values";
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`${name} must be ${rule}`);
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`${name} must be ${rule}`);
+  }
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!HEADER_NAME.test(key)) {
+      throw new Error(`${name} has an invalid header name ${JSON.stringify(key)}`);
+    }
+    if (RESERVED_HEADERS.has(key.toLowerCase())) {
+      throw new Error(`${name} cannot set ${JSON.stringify(key)}; it is set by the server`);
+    }
+    if (typeof value !== "string" || /[\r\n\0]/.test(value)) {
+      throw new Error(`${name} needs a single-line string value for ${JSON.stringify(key)}`);
+    }
+    headers[key] = value;
+  }
+  return headers;
+}
+
 function readPartFormat(env: NodeJS.ProcessEnv): PartFormat {
   const raw = readNonEmpty(env, "VIDEO_PART_FORMAT");
   if (raw === undefined) return "image_url";
@@ -105,6 +140,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   return {
     baseUrl: readBaseUrl(env),
     apiKey: readNonEmpty(env, "VIDEO_API_KEY"),
+    extraHeaders: readExtraHeaders(env),
     model: readNonEmpty(env, "VIDEO_MODEL"),
     partFormat: readPartFormat(env),
     maxDurationSeconds: readNumber(env, "VIDEO_MAX_DURATION_SECONDS", 300, 1, 7200, true),

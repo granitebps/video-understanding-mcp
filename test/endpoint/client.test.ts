@@ -13,6 +13,7 @@ function settings(overrides: Partial<EndpointSettings> = {}): EndpointSettings {
   return {
     baseUrl: endpoint.baseUrl,
     apiKey: KEY,
+    extraHeaders: {},
     model: "fake-model",
     requestTimeoutMs: 5_000,
     ...overrides,
@@ -146,6 +147,21 @@ describe("sendChat", () => {
     expect(error.safeMessage).not.toContain(KEY);
   });
 
+  it("sends extra headers and redacts their values from errors", async () => {
+    const secret = "access-secret-456";
+    endpoint.chat = [{ status: 400, body: { error: { message: `rejected ${secret}` } } }];
+
+    const error = await chatError({
+      extraHeaders: { "CF-Access-Client-Id": "id-123", "CF-Access-Client-Secret": secret },
+    });
+
+    const request = endpoint.requests.at(-1);
+    expect(request?.headers["cf-access-client-id"]).toBe("id-123");
+    expect(request?.headers["cf-access-client-secret"]).toBe(secret);
+    expect(request?.headers.authorization).toBe(`Bearer ${KEY}`);
+    expect(error.safeMessage).not.toContain(secret);
+  });
+
   it("reports a closed port as unreachable without the key", async () => {
     const error = await chatError({ baseUrl: await closedPortUrl() });
 
@@ -168,6 +184,15 @@ describe("checkReachable", () => {
     await expect(checkReachable(settings(), new AbortController().signal)).rejects.toMatchObject({
       code: "ENDPOINT_UNREACHABLE",
     });
+  });
+
+  it("sends extra headers with the reachability check", async () => {
+    await checkReachable(
+      settings({ extraHeaders: { "CF-Access-Client-Id": "id-123" } }),
+      new AbortController().signal,
+    );
+
+    expect(endpoint.requests.at(-1)?.headers["cf-access-client-id"]).toBe("id-123");
   });
 
   it("reports a closed port as unreachable", async () => {
